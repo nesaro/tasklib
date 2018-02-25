@@ -3,7 +3,7 @@ Provides lazy implementations for Task and TaskQuerySet.
 """
 
 
-class LazyUUIDTask(object):
+class LazyUUIDTask(dict):
     """
     A lazy wrapper around Task object, referenced by UUID.
 
@@ -16,25 +16,20 @@ class LazyUUIDTask(object):
     def __init__(self, tw, uuid):
         self._tw = tw
         self._uuid = uuid
+        super(self, LazyUUIDTask).__init__(self)
 
     def __getitem__(self, key):
         # LazyUUIDTask does not provide anything else other than 'uuid'
         if key is 'uuid':
             return self._uuid
-        else:
-            self.replace()
-            return self[key]
-
-    def __getattr__(self, name):
-        # Getattr is called only if the attribute could not be found using
-        # normal means
         self.replace()
-        return getattr(self, name)
+        return self[key]
 
     def __eq__(self, other):
-        if other and other['uuid']:
+        if other and other.get('uuid'):
             # For saved Tasks, just define equality by equality of uuids
             return self['uuid'] == other['uuid']
+        return False
 
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -52,19 +47,8 @@ class LazyUUIDTask(object):
         return LazyUUIDTask(self._tw, self._uuid)
 
     @property
-    def saved(self):
-        """
-        Implementation of the 'saved' property. Always returns True.
-        """
-        return True
-
-    @property
     def _modified_fields(self):
         return set()
-
-    @property
-    def modified(self):
-        return False
 
     def replace(self):
         """

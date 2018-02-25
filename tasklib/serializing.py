@@ -14,9 +14,6 @@ local_zone = tzlocal.get_localzone()
 
 class SerializingObject(object):
     """
-    Common ancestor for TaskResource & TaskWarriorFilter, since they both
-    need to serialize arguments.
-
     Serializing method should hold the following contract:
       - any empty value (meaning removal of the attribute)
         is deserialized into a empty string

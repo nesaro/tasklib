@@ -457,24 +457,24 @@ class TaskTest(TasklibTest):
         t = Task(self.tw, description='test')
         t.save()
 
-        self.assertEquals(t['description'], 'test')
+        self.assertEqual(t['description'], 'test')
 
         t['description'] = 'test-modified'
         t.save()
 
-        self.assertEquals(t['description'], 'test-modified')
+        self.assertEqual(t['description'], 'test-modified')
 
     def test_modify_simple_attribute_with_space(self):
         # Space can pose problems with parsing
         t = Task(self.tw, description='test task')
         t.save()
 
-        self.assertEquals(t['description'], 'test task')
+        self.assertEqual(t['description'], 'test task')
 
         t['description'] = 'test task modified'
         t.save()
 
-        self.assertEquals(t['description'], 'test task modified')
+        self.assertEqual(t['description'], 'test task modified')
 
     def test_empty_dependency_set_of_unsaved_task(self):
         t = Task(self.tw, description='test task')
@@ -1294,17 +1294,17 @@ class LazyUUIDTaskTest(TasklibTest):
 
     def test_lazy_explicit_conversion(self):
         assert type(self.lazy) is LazyUUIDTask
-        self.lazy.replace()
-        assert type(self.lazy) is Task
+        self.lazy.refresh()
+        assert type(self.lazy.content) is Task
 
     def test_conversion_key(self):
         assert self.stored['description'] == self.lazy['description']
-        assert type(self.lazy) is Task
+        assert type(self.lazy.content) is Task
 
     def test_conversion_attribute(self):
         assert type(self.lazy) is LazyUUIDTask
-        assert self.lazy.completed is False
-        assert type(self.lazy) is Task
+        self.assertFalse(self.lazy.completed)
+        self.assertEqual(type(self.lazy.content), Task)
 
     def test_normal_to_lazy_equality(self):
         assert self.stored == self.lazy
@@ -1347,7 +1347,7 @@ class LazyUUIDTaskTest(TasklibTest):
     def test_lazy_in_queryset(self):
         tasks = self.tw.tasks.filter(uuid=self.stored['uuid'])
 
-        assert self.lazy in tasks
+        self.assertTrue(self.lazy in tasks)
         assert type(self.lazy) is LazyUUIDTask
 
     def test_lazy_saved(self):
@@ -1443,7 +1443,7 @@ class LazyUUIDTaskSetTest(TasklibTest):
 
         assert taskset ^ lazyset == set([self.task1, self.task3])
         assert lazyset ^ taskset == set([self.task1, self.task3])
-        self.assertEqual(
+        self.assertSetEqual(
             taskset.symmetric_difference(lazyset),
             set([self.task1, self.task3]),
         )

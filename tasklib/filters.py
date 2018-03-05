@@ -2,42 +2,14 @@ import abc
 import six
 from .serializing import SerializingObject
 
-
-class TaskFilter(object):
-    """
-    Abstract base class that defines interface of a TaskFilter.
-    """
-
-    @abc.abstractmethod
-    def add_filter(self, arg):
-        """
-        Processes an non-keyword filter.
-        """
-        pass
-
-    @abc.abstractmethod
-    def add_filter_param(self, key, value):
-        """
-        Processes a keyword filter.
-        """
-        pass
-
-    @abc.abstractmethod
-    def clone(self):
-        """
-        Returns a new deep copy of itself.
-        """
-        pass
-
-
-class TaskWarriorFilter(TaskFilter, SerializingObject):
+class TaskWarriorFilter(SerializingObject):
     """
     A set of parameters to filter the task list with.
     """
 
     def __init__(self, backend, filter_params=None):
         self.filter_params = filter_params or []
-        super(TaskFilter, self).__init__(backend)
+        super(TaskWarriorFilter, self).__init__(backend)
 
     def add_filter(self, filter_str):
         self.filter_params.append(filter_str)

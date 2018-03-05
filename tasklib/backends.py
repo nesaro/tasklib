@@ -1,4 +1,3 @@
-import abc
 import copy
 import datetime
 import json
@@ -16,73 +15,11 @@ DATE_FORMAT_CALC = '%Y-%m-%dT%H:%M:%S'
 
 logger = logging.getLogger(__name__)
 
-
-class Backend(object):
-
-    @abc.abstractproperty
-    def filter_class(self):
-        """Returns the TaskFilter class used by this backend"""
-        pass
-
-    @abc.abstractmethod
-    def filter_tasks(self, filter_obj):
-        """Returns a list of Task objects matching the given filter"""
-        pass
-
-    @abc.abstractmethod
-    def save_task(self, task):
-        pass
-
-    @abc.abstractmethod
-    def delete_task(self, task):
-        pass
-
-    @abc.abstractmethod
-    def start_task(self, task):
-        pass
-
-    @abc.abstractmethod
-    def stop_task(self, task):
-        pass
-
-    @abc.abstractmethod
-    def complete_task(self, task):
-        pass
-
-    @abc.abstractmethod
-    def refresh_task(self, task, after_save=False):
-        """
-        Refreshes the given task. Returns new data dict with serialized
-        attributes.
-        """
-        pass
-
-    @abc.abstractmethod
-    def annotate_task(self, task, annotation):
-        pass
-
-    @abc.abstractmethod
-    def denotate_task(self, task, annotation):
-        pass
-
-    @abc.abstractmethod
-    def sync(self):
-        """Syncs the backend database with the taskd server"""
-        pass
-
-    def convert_datetime_string(self, value):
-        """
-        Converts TW syntax datetime string to a localized datetime
-        object. This method is not mandatory.
-        """
-        raise NotImplementedError
-
-
 class TaskWarriorException(Exception):
     pass
 
 
-class TaskWarrior(Backend):
+class TaskWarrior(object):
 
     VERSION_2_1_0 = six.u('2.1.0')
     VERSION_2_2_0 = six.u('2.2.0')
@@ -288,10 +225,9 @@ class TaskWarrior(Backend):
         # Return all whole triplet only if explicitly asked for
         if not return_all:
             return stdout.rstrip().split('\n')
-        else:
-            return (stdout.rstrip().split('\n'),
-                    stderr.rstrip().split('\n'),
-                    p.returncode)
+        return (stdout.rstrip().split('\n'),
+                stderr.rstrip().split('\n'),
+                p.returncode)
 
     def enforce_recurrence(self):
         # Run arbitrary report command which will trigger generation

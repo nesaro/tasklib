@@ -15,66 +15,53 @@ class LazyUUIDTask(object):
 
     def __init__(self, tw, uuid):
         self._tw = tw
-        self._uuid = uuid
+        self.uuid = uuid
+        self.content = None
 
     def __getitem__(self, key):
-        # LazyUUIDTask does not provide anything else other than 'uuid'
-        if key is 'uuid':
-            return self._uuid
-        else:
-            self.replace()
-            return self[key]
-
-    def __getattr__(self, name):
-        # Getattr is called only if the attribute could not be found using
-        # normal means
-        self.replace()
-        return getattr(self, name)
-
-    def __eq__(self, other):
-        if other and other['uuid']:
-            # For saved Tasks, just define equality by equality of uuids
-            return self['uuid'] == other['uuid']
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
-
-    def __hash__(self):
-        return self['uuid'].__hash__()
-
-    def __repr__(self):
-        return 'LazyUUIDTask: {0}'.format(self._uuid)
-
-    def __copy__(self):
-        return LazyUUIDTask(self._tw, self._uuid)
-
-    def __deepcopy__(self, memo):
-        return LazyUUIDTask(self._tw, self._uuid)
+        if key == 'uuid':
+            return self.uuid
+        self.refresh()
+        return self.content[key]
 
     @property
-    def saved(self):
-        """
-        Implementation of the 'saved' property. Always returns True.
-        """
-        return True
-
-    @property
-    def _modified_fields(self):
-        return set()
+    def completed(self):
+        self.refresh()
+        return getattr(self.content, 'completed', False)
 
     @property
     def modified(self):
-        return False
+        self.refresh()
+        return getattr(self.content, 'modified', False)
 
-    def replace(self):
+    @property
+    def saved(self):
+        self.refresh()
+        return getattr(self.content, 'saved', True)
+
+    @property
+    def _modified_fields(self):
+        return getattr(self.content, '_modified_fields', set())
+
+    def __hash__(self):
+        return hash(self.uuid)
+
+    def __eq__(self, other):
+        try:
+            return self['uuid'] == other['uuid']
+        except KeyError:
+            return False
+
+    def __repr__(self):
+        return 'LazyUUIDTask: {0}'.format(self.uuid)
+
+    def refresh(self):
         """
         Performs conversion to the regular Task object, referenced by the
         stored UUID.
         """
 
-        replacement = self._tw.tasks.get(uuid=self._uuid)
-        self.__class__ = replacement.__class__
-        self.__dict__ = replacement.__dict__
+        self.content = self._tw.tasks.get(uuid=self.uuid)
 
 
 class LazyUUIDTaskSet(object):
@@ -99,7 +86,7 @@ class LazyUUIDTaskSet(object):
             # to TaskQuerySet just because of that
             raise AttributeError
         else:
-            self.replace()
+            self.refresh()
             return getattr(self, name)
 
     def __repr__(self):
@@ -224,7 +211,7 @@ class LazyUUIDTaskSet(object):
     def clear(self):
         self._uuids.clear()
 
-    def replace(self):
+    def refresh(self):
         """
         Performs conversion to the regular TaskQuerySet object, referenced by
         the stored UUIDs.
